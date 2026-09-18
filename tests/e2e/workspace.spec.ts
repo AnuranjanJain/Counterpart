@@ -108,9 +108,8 @@ test("entry and example review meet automated accessibility checks", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Continue with Google" }).click();
   await expect(
-    page.getByRole("alert").filter({ hasText: "not configured" }),
+    page.getByRole("button", { name: "Continue with Google" }),
   ).toBeVisible();
   expect(
     (

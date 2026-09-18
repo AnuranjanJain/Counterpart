@@ -4,9 +4,18 @@ A contract review desk for Indian freelancers. Understand an agreement, compare 
 
 [Open Counterpart](https://counterpart-jade.vercel.app) · [Public repository](https://github.com/AnuranjanJain/Counterpart)
 
-The public deployment is configured for authenticated reviews with Supabase and server-side Gemini through AI Studio. Its read-only fictional example remains available before sign-in. Live provider feasibility was checked on 18 September 2026 with `gemini-3.5-flash-lite`: 36/36 labeled calls returned successfully, with observed latency from 1,022 to 2,819 ms. Human review is still required before claiming an accuracy score.
+Counterpart is deployed with Google sign-in, owner-scoped Supabase storage, and server-side Gemini through Google AI Studio. The authenticated review flow has been manually verified on the live deployment. A read-only fictional example remains available before sign-in.
 
 **Vertical:** Legal assistance and access. **Persona:** an independent professional reviewing a client agreement before signing.
+
+## Project submission
+
+- **Live project:** [counterpart-jade.vercel.app](https://counterpart-jade.vercel.app)
+- **Source code:** [github.com/AnuranjanJain/Counterpart](https://github.com/AnuranjanJain/Counterpart)
+- **GenAI service:** Google Gemini 3.5 Flash Lite, accessed server-side through the official `@google/genai` SDK and a Google AI Studio API key.
+- **Submission copy:** [project description and GenAI explanation](docs/project-submission.md)
+
+The walkthrough video is a separate submission track. It is not included in this repository or required to run the project.
 
 ## Run locally
 
@@ -31,6 +40,13 @@ For real analysis, configure `.env.local` using `.env.example`. Follow [the key 
 
 The first version is the source for Review, Q&A, Scenarios, and Brief. Compare examines both versions. This distinction prevents a revised agreement from silently replacing the reviewed source.
 
+## Assumptions
+
+- Agreements are in English and are either fictional, public, or properly redacted.
+- The first release supports text-based PDFs and pasted agreement text; it does not perform OCR or accept DOCX files.
+- Counterpart is designed around an India-focused freelance workflow, while foreign governing law is flagged for professional review.
+- Findings help users understand document wording and prepare questions. They do not replace advice from a qualified legal professional.
+
 ## GenAI architecture
 
 | Integration                      | Input                                | Output and validation                                                  |
@@ -40,7 +56,7 @@ The first version is the source for Review, Q&A, Scenarios, and Brief. Compare e
 | `POST /api/reviews/:id/question` | Original + user question             | Grounded answer, assumptions, omissions, professional-advice questions |
 | `POST /api/reviews/:id/scenario` | Original + scenario + numeric inputs | Grounded interpretation plus separately calculated illustration        |
 
-Google's official `@google/genai` SDK runs only on the server through an AI Studio API key. The deployed configuration uses `gemini-3.5-flash-lite`, configurable through `GEMINI_MODEL`; model availability is account and quota dependent, so every change requires a live inference check and reevaluation. No autonomous tools, web searches, vector database, or model-provider fallbacks are used. The bounded documents fit in full context. Owner-scoped cache keys include document/context payload, model, and prompt version.
+Google's official `@google/genai` SDK runs only on the server through an AI Studio API key. The deployed configuration uses `gemini-3.5-flash-lite`, configurable through `GEMINI_MODEL`. A failed structured response gets one bounded corrective retry, but no response is saved unless Zod and exact source-span checks pass. No autonomous tools, web searches, vector database, or model-provider fallbacks are used. The bounded documents fit in full context. Owner-scoped cache keys include document/context payload, model, and prompt version.
 
 ## Boundaries and privacy
 
@@ -64,9 +80,9 @@ npm run test:e2e
 npm audit
 ```
 
-Domain tests cover parsing limits, PDF failure cases, evidence validation, comparison direction, and scenario arithmetic. HTTP tests cover input boundaries and redirect safety. Browser tests exercise example workflows on desktop/mobile, accessibility with axe, and absence of fabricated live results. SQL tests cover owner isolation, concurrent admission, cache behavior, and deletion-resistant quotas; see database setup documentation.
+The current suite has 41 Vitest checks covering parsing limits, PDF failure cases, evidence validation, generated-response retries, comparison direction, scenario arithmetic, input boundaries, and redirect safety. Browser tests exercise desktop/mobile example workflows and accessibility with axe. SQL tests cover owner isolation, concurrent admission, cache behavior, and deletion-resistant quotas; see database setup documentation.
 
-`fixtures/` contains 12 explicitly fictional agreements, four revision pairs, and 36 labeled evaluation cases. They are evaluation inputs, **not measured AI performance**. Live model quality and the 90% release threshold remain unverified until the returned outputs are human-reviewed. See [docs/release-checklist.md](docs/release-checklist.md).
+`fixtures/` contains 12 explicitly fictional agreements, four revision pairs, and 36 labeled evaluation cases. A live feasibility run on 18 September 2026 returned 36/36 responses from `gemini-3.5-flash-lite`, with observed latency from 1,022 to 2,819 ms. These are provider-availability results, **not measured AI performance**. Human review is required before claiming the 90% release threshold. See [docs/release-checklist.md](docs/release-checklist.md).
 
 With a configured Gemini environment, `node --env-file=.env.local scripts/evaluate.mjs` records real model answers and latency for three labeled questions by default. Set `EVALUATION_CASE_LIMIT` to extend the run within your quota and `EVALUATION_DELAY_MS` to pace free-tier requests. Results remain `awaiting-human-review`; this provider probe does not replace endpoint or comparison evaluation.
 
@@ -80,4 +96,4 @@ With a configured Gemini environment, `node --env-file=.env.local scripts/evalua
 
 ## Submission
 
-Use one public `main` branch and keep the repository below 10 MB. Dependencies, generated PDF worker, build output, private data, and videos are excluded. A live deployment and a video strictly under four minutes are required; see [docs/demo-script.md](docs/demo-script.md). No submission attempt is made by running this project.
+The repository is public, uses one `main` branch, and excludes dependencies, build output, private data, evaluation artifacts, and videos. The project and the walkthrough video are separate submission tracks. Use [the project submission sheet](docs/project-submission.md) for the repository/project form and [the walkthrough outline](docs/demo-script.md) when preparing the separate video submission.

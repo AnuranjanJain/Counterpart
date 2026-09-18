@@ -3,7 +3,7 @@
 ## Verified locally
 
 - Production compilation and TypeScript checking.
-- 39 domain, HTTP, request-isolation, and scenario-contract tests.
+- 41 domain, HTTP, request-isolation, generated-response retry, and scenario-contract tests.
 - Eight desktop / mobile Playwright checks, including axe WCAG A/AA scans.
 - Disposable PostgreSQL ownership, cache, quota, and concurrency assertions using minimal Supabase auth stand-ins.
 - Dependency audit after upgrading vulnerable PDF.js and Vitest versions: zero advisories at verification time.
@@ -21,8 +21,8 @@ These checks do not establish live Google OAuth, cloud RLS configuration, or mod
 - Verify original PDF rendering, upload limits, provider timeout, quota exhaustion, changed-input outputs, save/reopen/delete, and no confidential data in logs.
 - Check official Indian legal reference URLs and record dates before publishing sourced summaries.
 - Verify live URL without deployment protection, public GitHub visibility, exactly one branch, and GitHub-reported repository size under 10 MB.
-- Record the live walkthrough, verify video length under four minutes, and check access in a private browser window.
-- Submit by 26 September 2026; preserve the maximum of three attempts.
+- For the separate video submission, record the live walkthrough, verify video length under four minutes, and check access in a private browser window.
+- For the project submission, use `docs/project-submission.md` and preserve the maximum of three attempts.
 
 ## Known limits
 
