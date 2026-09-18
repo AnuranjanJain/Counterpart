@@ -1,0 +1,8 @@
+output/
+tmp/
+artifacts/
+test-results/
+playwright-report/
+scripts/generate_counterpart_test_pdf.py
+.next/
+.git/
