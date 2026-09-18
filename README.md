@@ -4,7 +4,7 @@ A contract review desk for Indian freelancers. Understand an agreement, compare 
 
 [Open Counterpart](https://counterpart-jade.vercel.app) · [Public repository](https://github.com/AnuranjanJain/Counterpart)
 
-Deployment currently provides the read-only example until the owner configures Supabase, Google OAuth, and Gemini. Live legal analysis is not yet verified.
+The public deployment is configured for authenticated reviews with Supabase and server-side Gemini through AI Studio. Its read-only fictional example remains available before sign-in. Live provider feasibility was checked on 18 September 2026 with `gemini-3.5-flash-lite`: 36/36 labeled calls returned successfully, with observed latency from 1,022 to 2,819 ms. Human review is still required before claiming an accuracy score.
 
 **Vertical:** Legal assistance and access. **Persona:** an independent professional reviewing a client agreement before signing.
 
@@ -40,7 +40,7 @@ The first version is the source for Review, Q&A, Scenarios, and Brief. Compare e
 | `POST /api/reviews/:id/question` | Original + user question             | Grounded answer, assumptions, omissions, professional-advice questions |
 | `POST /api/reviews/:id/scenario` | Original + scenario + numeric inputs | Grounded interpretation plus separately calculated illustration        |
 
-Google's official `@google/genai` SDK runs only on the server. Default model: `gemini-2.5-flash`, configurable through `GEMINI_MODEL`. No autonomous tools, web searches, vector database, or model-provider fallbacks. The bounded documents fit in full context. Owner-scoped cache keys include document/context payload, model, and prompt version. Changing a model requires reevaluation.
+Google's official `@google/genai` SDK runs only on the server through an AI Studio API key. The deployed configuration uses `gemini-3.5-flash-lite`, configurable through `GEMINI_MODEL`; model availability is account and quota dependent, so every change requires a live inference check and reevaluation. No autonomous tools, web searches, vector database, or model-provider fallbacks are used. The bounded documents fit in full context. Owner-scoped cache keys include document/context payload, model, and prompt version.
 
 ## Boundaries and privacy
 
@@ -66,9 +66,9 @@ npm audit
 
 Domain tests cover parsing limits, PDF failure cases, evidence validation, comparison direction, and scenario arithmetic. HTTP tests cover input boundaries and redirect safety. Browser tests exercise example workflows on desktop/mobile, accessibility with axe, and absence of fabricated live results. SQL tests cover owner isolation, concurrent admission, cache behavior, and deletion-resistant quotas; see database setup documentation.
 
-`fixtures/` contains 12 explicitly fictional agreements, four revision pairs, and 36 labeled evaluation cases. They are evaluation inputs, **not measured AI performance**. Live model quality and the 90% release threshold remain unverified until model credentials are configured and outputs are reviewed. See [docs/release-checklist.md](docs/release-checklist.md).
+`fixtures/` contains 12 explicitly fictional agreements, four revision pairs, and 36 labeled evaluation cases. They are evaluation inputs, **not measured AI performance**. Live model quality and the 90% release threshold remain unverified until the returned outputs are human-reviewed. See [docs/release-checklist.md](docs/release-checklist.md).
 
-With a configured Gemini environment, `node --env-file=.env.local scripts/evaluate.mjs` records real model answers and latency for three labeled questions by default. Set `EVALUATION_CASE_LIMIT` to extend the run within your quota. Results remain `awaiting-human-review`; this provider probe does not replace endpoint or comparison evaluation.
+With a configured Gemini environment, `node --env-file=.env.local scripts/evaluate.mjs` records real model answers and latency for three labeled questions by default. Set `EVALUATION_CASE_LIMIT` to extend the run within your quota and `EVALUATION_DELAY_MS` to pace free-tier requests. Results remain `awaiting-human-review`; this provider probe does not replace endpoint or comparison evaluation.
 
 ## Code structure
 

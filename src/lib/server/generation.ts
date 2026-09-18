@@ -101,7 +101,7 @@ export async function generate<T>(
       503,
       "Gemini is not configured. Add GEMINI_API_KEY on the server to enable live analysis.",
     );
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
   const cap = Number(process.env.GLOBAL_DAILY_GENERATION_LIMIT || "30");
   if (!Number.isInteger(cap) || cap < 1 || cap > 10000)
     throw new ApiError(

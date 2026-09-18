@@ -20,7 +20,7 @@ Create `.env.local` beside `package.json` using the variable names in `.env.exam
 ## Gemini
 
 1. Go to https://aistudio.google.com/api-keys and create a Gemini API key in a project with available free-tier quota.
-2. Set `GEMINI_API_KEY` in `.env.local`. Keep `GEMINI_MODEL=gemini-2.5-flash` unless you intentionally select and evaluate another supported model.
+2. Set `GEMINI_API_KEY` in `.env.local`. Counterpart uses AI Studio's text generation endpoint through the official `@google/genai` server SDK. The verified demo setting is `GEMINI_MODEL=gemini-3.5-flash-lite`; model availability is account and quota dependent, so run the live evaluation before changing it.
 3. Check your actual model's quota in AI Studio. Set `GLOBAL_DAILY_GENERATION_LIMIT` and `generation_settings.daily_limit` in Supabase conservatively. The application defaults to 30 admitted operations but retries may make additional provider requests.
 
 Restart `npm run dev` after configuring variables. Test sign-in, create a fictional agreement, and run a real analysis. A catalog listing or key creation alone does not prove inference works.

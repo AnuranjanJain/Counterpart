@@ -16,16 +16,21 @@ if (!Number.isInteger(limit) || limit < 1 || limit > cases.length)
   throw new Error(
     `EVALUATION_CASE_LIMIT must be between 1 and ${cases.length}.`,
   );
-const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const delayMs = Number(process.env.EVALUATION_DELAY_MS || "0");
+if (!Number.isInteger(delayMs) || delayMs < 0 || delayMs > 60000)
+  throw new Error("EVALUATION_DELAY_MS must be an integer between 0 and 60000.");
+const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
 const client = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
   httpOptions: { timeout: 30000, retryOptions: { attempts: 1 } },
 });
 const results = [];
 await mkdir("artifacts", { recursive: true });
-for (const entry of cases.slice(0, limit)) {
+for (const [index, entry] of cases.slice(0, limit).entries()) {
   const agreement = agreements.find((item) => item.id === entry.fixture);
   if (!agreement) throw new Error(`Missing fixture ${entry.fixture}`);
+  if (index > 0 && delayMs > 0)
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
   const start = performance.now();
   try {
     const response = await client.models.generateContent({
@@ -50,13 +55,15 @@ for (const entry of cases.slice(0, limit)) {
       reviewStatus: "awaiting-human-review",
       passed: null,
     });
-  } catch {
+  } catch (error) {
     results.push({
       ...entry,
       model,
       latencyMs: Math.round(performance.now() - start),
       error:
         "Provider request failed; inspect account quotas and model availability.",
+      providerErrorName: error?.name ?? null,
+      providerStatus: error?.status ?? null,
       reviewStatus: "request-failed",
       passed: null,
     });
