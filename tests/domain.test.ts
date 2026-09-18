@@ -8,6 +8,7 @@ import {
 } from "../src/lib/grounding";
 import { calculateScenario } from "../src/lib/scenarios";
 import { contextSchema, documentVersionSchema } from "../src/lib/domain";
+import { requestValidatedGeneration } from "../src/lib/generation-validation";
 
 const pdfMock = vi.hoisted(() => ({ getDocument: vi.fn(), destroy: vi.fn() }));
 vi.mock("pdfjs-dist", () => ({
@@ -235,6 +236,34 @@ describe("grounding", () => {
         doc,
       ).evidence,
     ).toEqual([]);
+  });
+});
+
+describe("generated response validation", () => {
+  it("retries one invalid model response and returns only a validated result", async () => {
+    const request = vi
+      .fn()
+      .mockResolvedValueOnce('{"answer":"unverified"}')
+      .mockResolvedValueOnce('{"answer":"verified"}');
+    await expect(
+      requestValidatedGeneration(
+        request,
+        (input) => {
+          const answer = (input as { answer?: string }).answer;
+          if (answer !== "verified") throw new Error("unverified");
+          return answer;
+        },
+      ),
+    ).resolves.toBe("verified");
+    expect(request).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not retry a provider failure", async () => {
+    const request = vi.fn().mockRejectedValue(new Error("provider unavailable"));
+    await expect(
+      requestValidatedGeneration(request, (input) => input),
+    ).rejects.toThrow("provider unavailable");
+    expect(request).toHaveBeenCalledOnce();
   });
 });
 
