@@ -1,0 +1,43 @@
+[
+  {
+    "id": "pair-1",
+    "before": "design-original",
+    "after": "design-revised",
+    "expectedMaterialChanges": [
+      "payment period",
+      "revision limit",
+      "acceptance procedure",
+      "termination payment",
+      "ownership timing",
+      "portfolio permission"
+    ]
+  },
+  {
+    "id": "pair-2",
+    "before": "developer-original",
+    "after": "developer-revised",
+    "expectedMaterialChanges": [
+      "liability cap",
+      "indirect loss exclusion"
+    ]
+  },
+  {
+    "id": "pair-3",
+    "before": "writer-original",
+    "after": "writer-revised",
+    "expectedMaterialChanges": [
+      "non-compete removed",
+      "termination payment"
+    ]
+  },
+  {
+    "id": "pair-4",
+    "before": "consultant-original",
+    "after": "consultant-revised",
+    "expectedMaterialChanges": [
+      "termination right",
+      "refund rate",
+      "insurance obligation"
+    ]
+  }
+]
