@@ -2,6 +2,10 @@
 
 A contract review desk for Indian freelancers. Understand an agreement, compare a revision, explore a payment or cancellation scenario, and prepare a negotiation brief with links to the original wording.
 
+[Open Counterpart](https://counterpart-jade.vercel.app) · [Public repository](https://github.com/AnuranjanJain/Counterpart)
+
+Deployment currently provides the read-only example until the owner configures Supabase, Google OAuth, and Gemini. Live legal analysis is not yet verified.
+
 **Vertical:** Legal assistance and access. **Persona:** an independent professional reviewing a client agreement before signing.
 
 ## Run locally
