@@ -56,10 +56,10 @@ test("example review supports evidence, brief, comparison and scenario boundarie
   );
   if (testInfo.project.name === "mobile")
     await page.getByRole("button", { name: "Findings", exact: true }).click();
-  await page
-    .getByRole("checkbox", { name: "Brief", exact: true })
-    .first()
-    .check();
+  await page.getByRole("button", { name: "Add to brief" }).first().click();
+  await expect(
+    page.getByRole("button", { name: "In brief" }).first(),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Prepare brief (1)" }).click();
   await expect(page.getByLabel("Edit negotiation brief")).toHaveValue(
     /seven-day acceptance/,

@@ -38,6 +38,7 @@ import { DocumentView } from "./document-view";
 import { Intake } from "./intake";
 import { ScenarioView } from "./scenario-view";
 import { LegalContext } from "./legal-context";
+import { ActionPlan } from "./action-plan";
 import { api, invalidateRequests, requestEpoch } from "@/lib/client-api";
 
 type View = "review" | "compare" | "scenarios" | "brief";
@@ -279,6 +280,11 @@ export function Workspace() {
       `COUNTERPART / NEGOTIATION BRIEF\n${review.title}\nOriginal version: ${review.versions[0].id}\n\n${chosen.map((f, i) => `${i + 1}. ${f.title}\n${f.question}\n${f.evidence.map((c) => `${sourceLabel(review, c.sourceId)}: "${c.quote}"`).join("\n")}`).join("\n\n")}\n\nQUESTIONS FOR A LEGAL PROFESSIONAL\n${review.analysis.missingInformation.map((s) => `- ${s}`).join("\n")}\n\nPrepared from document text. Informational assistance, not legal advice.`,
     );
     setView("brief");
+  }
+  function toggleBriefFinding(id: string) {
+    setSelected((old) =>
+      old.includes(id) ? old.filter((item) => item !== id) : [...old, id],
+    );
   }
   if (!sessionReady)
     return (
@@ -846,13 +852,7 @@ export function Workspace() {
                                       <input
                                         type="checkbox"
                                         checked={selected.includes(f.id)}
-                                        onChange={(e) =>
-                                          setSelected((old) =>
-                                            e.target.checked
-                                              ? [...old, f.id]
-                                              : old.filter((id) => id !== f.id),
-                                          )
-                                        }
+                                        onChange={() => toggleBriefFinding(f.id)}
                                       />
                                       Brief
                                     </label>
@@ -891,6 +891,13 @@ export function Workspace() {
                                 )}
                               </ul>
                             </div>
+                            <ActionPlan
+                              analysis={review.analysis}
+                              context={review.context}
+                              selected={selected}
+                              onSelect={toggleBriefFinding}
+                              onCite={cite}
+                            />
                             <div className="qa">
                               <h3>Ask about this agreement</h3>
                               <form

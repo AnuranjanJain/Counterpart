@@ -9,6 +9,12 @@ import {
 import { calculateScenario } from "../src/lib/scenarios";
 import { contextSchema, documentVersionSchema } from "../src/lib/domain";
 import { requestValidatedGeneration } from "../src/lib/generation-validation";
+import {
+  focusedContextLimits,
+  selectFocusedContext,
+} from "../src/lib/focused-context";
+import { decisionChecklist, negotiationActions } from "../src/lib/action-plan";
+import { exampleReview } from "../src/lib/example";
 
 const pdfMock = vi.hoisted(() => ({ getDocument: vi.fn(), destroy: vi.fn() }));
 vi.mock("pdfjs-dist", () => ({
@@ -236,6 +242,56 @@ describe("grounding", () => {
         doc,
       ).evidence,
     ).toEqual([]);
+  });
+});
+
+describe("focused document context", () => {
+  const document = parseText(
+    "Payment is due within 7 days.\n\nThe client may terminate with notice.\n\nOwnership transfers after full payment.",
+    "Agreement",
+    "v1",
+  );
+  it("selects only relevant anchored passages for a question", () => {
+    const context = selectFocusedContext(document, {
+      question: "When is payment due?",
+    });
+    expect(context.matched).toBe(true);
+    expect(context.document.spans.map((span) => span.id)).toEqual([
+      "v1:p1:1",
+      "v1:p1:3",
+    ]);
+    expect(context.characterCount).toBeLessThan(document.spans.reduce((n, span) => n + span.text.length, 0));
+  });
+  it("selects cancellation terms deterministically and retains original IDs", () => {
+    const first = selectFocusedContext(document, { scenario: "cancellation" });
+    const second = selectFocusedContext(document, { scenario: "cancellation" });
+    expect(first.document.spans.map((span) => span.id)).toContain("v1:p1:2");
+    expect(second).toEqual(first);
+  });
+  it("uses a bounded fallback when there are no matching terms", () => {
+    const context = selectFocusedContext(document, { question: "Explain typography." });
+    expect(context.matched).toBe(false);
+    expect(context.sourceCount).toBeGreaterThan(0);
+    expect(context.sourceCount).toBeLessThanOrEqual(focusedContextLimits.maxSpans);
+    expect(context.characterCount).toBeLessThanOrEqual(focusedContextLimits.maxCharacters);
+  });
+});
+
+describe("freelancer action outputs", () => {
+  const analysis = exampleReview.analysis!;
+  it("ranks high-severity evidence-backed findings before lower priorities", () => {
+    const actions = negotiationActions(analysis, exampleReview.context);
+    expect(actions[0]).toMatchObject({ findingId: "payment", priority: "Do before signing" });
+    expect(actions[1].priority).toBe("Do before signing");
+  });
+  it("covers each core pre-signing decision point", () => {
+    expect(decisionChecklist(analysis).map((item) => item.label)).toEqual([
+      "Payment",
+      "Acceptance",
+      "Cancellation",
+      "Revisions",
+      "Ownership",
+    ]);
   });
 });
 

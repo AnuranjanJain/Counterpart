@@ -58,6 +58,8 @@ The first version is the source for Review, Q&A, Scenarios, and Brief. Compare e
 
 Google's official `@google/genai` SDK runs only on the server through an AI Studio API key. The deployed configuration uses `gemini-3.5-flash-lite`, configurable through `GEMINI_MODEL`. A failed structured response gets one bounded corrective retry, but no response is saved unless Zod and exact source-span checks pass. No autonomous tools, web searches, vector database, or model-provider fallbacks are used. The bounded documents fit in full context. Owner-scoped cache keys include document/context payload, model, and prompt version.
 
+For follow-up questions and scenarios, Counterpart deterministically narrows the model payload to relevant anchored passages, capped at 12 passages or 18,000 characters. Full agreement text remains in use for first-pass reviews and revision comparison. Citations from every operation are still validated against the complete saved agreement.
+
 ## Boundaries and privacy
 
 - Informational assistance, not legal advice or an enforceability decision. A valid citation proves the quote exists; it does not establish that the interpretation is correct.
@@ -78,13 +80,16 @@ npm run build
 npx playwright install chromium
 npm run test:e2e
 npm audit
+npm run benchmark:context
 ```
 
-The current suite has 41 Vitest checks covering parsing limits, PDF failure cases, evidence validation, generated-response retries, comparison direction, scenario arithmetic, input boundaries, and redirect safety. Browser tests exercise desktop/mobile example workflows and accessibility with axe. SQL tests cover owner isolation, concurrent admission, cache behavior, and deletion-resistant quotas; see database setup documentation.
+The current suite has 46 Vitest checks covering parsing limits, PDF failure cases, evidence validation, focused context, generated-response retries, deterministic action outputs, comparison direction, scenario arithmetic, input boundaries, and redirect safety. Browser tests exercise desktop/mobile example workflows, action-plan-to-brief flow, and accessibility with axe. SQL tests cover owner isolation, concurrent admission, cache behavior, and deletion-resistant quotas; see database setup documentation.
 
 `fixtures/` contains 12 explicitly fictional agreements, four revision pairs, and 36 labeled evaluation cases. A live feasibility run on 18 September 2026 returned 36/36 responses from `gemini-3.5-flash-lite`, with observed latency from 1,022 to 2,819 ms. These are provider-availability results, **not measured AI performance**. Human review is required before claiming the 90% release threshold. See [docs/release-checklist.md](docs/release-checklist.md).
 
-With a configured Gemini environment, `node --env-file=.env.local scripts/evaluate.mjs` records real model answers and latency for three labeled questions by default. Set `EVALUATION_CASE_LIMIT` to extend the run within your quota and `EVALUATION_DELAY_MS` to pace free-tier requests. Results remain `awaiting-human-review`; this provider probe does not replace endpoint or comparison evaluation.
+The current offline fixture benchmark reports a 46% average reduction in question-operation document characters across those 36 cases. It measures deterministic payload size only; live latency and answer quality remain separately evaluated.
+
+With a configured Gemini environment, `node --env-file=.env.local scripts/evaluate.mjs` records real model answers and latency for three labeled questions by default. Set `EVALUATION_CASE_LIMIT` to extend the run within your quota and `EVALUATION_DELAY_MS` to pace free-tier requests. Results remain `awaiting-human-review`; this provider probe does not replace endpoint or comparison evaluation. `npm run benchmark:context` writes an ignored, offline fixture report showing focused-context character reduction without making model-quality or latency claims.
 
 ## Code structure
 

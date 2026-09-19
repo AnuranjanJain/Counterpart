@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "benchmark:context": "node scripts/benchmark-focused-context.mjs"
   },
   "dependencies": {
     "@google/genai": "^1.0.0",

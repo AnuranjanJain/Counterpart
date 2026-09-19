@@ -4,7 +4,8 @@ import { GoogleGenAI } from "@google/genai";
 import { ApiError } from "./http";
 import type { ownedReview } from "./reviews";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requestValidatedGeneration } from "@/lib/generation-validation";
+import { requestValidatedGenerationWithMetrics } from "@/lib/generation-validation";
+import { recordGenerationMetric } from "./generation-metrics";
 
 const PROMPT_VERSION = "counterpart-2026-09-19-v2";
 const SYSTEM_INSTRUCTION = `You are Counterpart, an informational agreement review assistant for Indian freelancers.
@@ -114,6 +115,9 @@ export async function generate<T>(
     context: session.review.context,
     payload,
   });
+  const sourceCount = sourcePassageCount(payload);
+  const inputCharacters = contents.length;
+  const startedAt = performance.now();
   const key = createHash("sha256")
     .update(JSON.stringify({ model, prompt: PROMPT_VERSION, contents }))
     .digest("hex");
@@ -129,15 +133,30 @@ export async function generate<T>(
     },
   );
   if (admissionError) throw quotaError(admissionError.message);
-  if (claim.cached) return validate(claim.result);
+  if (claim.cached) {
+    const value = validate(claim.result);
+    void recordMetric({
+      session,
+      operation,
+      model,
+      inputCharacters,
+      sourceCount,
+      outputCharacters: 0,
+      latencyMs: Math.round(performance.now() - startedAt),
+      retries: 0,
+      cacheHit: true,
+      outcome: "complete",
+    });
+    return value;
+  }
   try {
     const client = new GoogleGenAI({
       apiKey,
       httpOptions: { timeout: 25_000, retryOptions: { attempts: 2 } },
     });
-    let parsed: T;
+    let generation: { value: T; retries: number };
     try {
-      parsed = await requestValidatedGeneration(
+      generation = await requestValidatedGenerationWithMetrics(
         async (attempt) => {
           const response = await client.models.generateContent({
             model,
@@ -167,7 +186,7 @@ export async function generate<T>(
     const { error } = await admin.rpc("finish_generation", {
       p_owner: session.userId,
       p_ticket: claim.ticket,
-      p_result: parsed,
+      p_result: generation.value,
       p_failed: false,
     });
     if (error)
@@ -175,7 +194,19 @@ export async function generate<T>(
         503,
         "The answer could not be saved. Please retry after two minutes.",
       );
-    return parsed;
+    void recordMetric({
+      session,
+      operation,
+      model,
+      inputCharacters,
+      sourceCount,
+      outputCharacters: JSON.stringify(generation.value).length,
+      latencyMs: Math.round(performance.now() - startedAt),
+      retries: generation.retries,
+      cacheHit: false,
+      outcome: "complete",
+    });
+    return generation.value;
   } catch (error) {
     await admin.rpc("finish_generation", {
       p_owner: session.userId,
@@ -183,10 +214,41 @@ export async function generate<T>(
       p_result: null,
       p_failed: true,
     });
+    void recordMetric({
+      session,
+      operation,
+      model,
+      inputCharacters,
+      sourceCount,
+      outputCharacters: 0,
+      latencyMs: Math.round(performance.now() - startedAt),
+      retries: 0,
+      cacheHit: false,
+      outcome: "failed",
+    });
     if (error instanceof ApiError) throw error;
     throw new ApiError(
       502,
       "The AI provider is unavailable or timed out. Your saved review is unchanged. Please retry after two minutes.",
     );
   }
+}
+
+function sourcePassageCount(payload: unknown) {
+  if (!payload || typeof payload !== "object") return 0;
+  const value = payload as { document?: { spans?: unknown[] } };
+  return Array.isArray(value.document?.spans) ? value.document.spans.length : 0;
+}
+
+function recordMetric(
+  input: Omit<Parameters<typeof recordGenerationMetric>[0], "ownerId" | "reviewId"> & {
+    session: Awaited<ReturnType<typeof ownedReview>>;
+  },
+) {
+  const { session, ...metric } = input;
+  return recordGenerationMetric({
+    ...metric,
+    ownerId: session.userId,
+    reviewId: session.review.id,
+  }).catch(() => undefined);
 }
