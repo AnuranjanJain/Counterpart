@@ -9,6 +9,7 @@ import {
 import { calculateScenario } from "../src/lib/scenarios";
 import { contextSchema, documentVersionSchema } from "../src/lib/domain";
 import { requestValidatedGeneration } from "../src/lib/generation-validation";
+import { outputTokenLimit } from "../src/lib/generation-limits";
 import {
   focusedContextLimits,
   selectFocusedContext,
@@ -320,6 +321,16 @@ describe("generated response validation", () => {
       requestValidatedGeneration(request, (input) => input),
     ).rejects.toThrow("provider unavailable");
     expect(request).toHaveBeenCalledOnce();
+  });
+});
+
+describe("generation resource limits", () => {
+  it("uses response budgets suited to each review operation", () => {
+    expect(outputTokenLimit("analysis")).toBe(4_500);
+    expect(outputTokenLimit("comparison")).toBe(4_500);
+    expect(outputTokenLimit("question")).toBe(1_500);
+    expect(outputTokenLimit("scenario")).toBe(2_000);
+    expect(outputTokenLimit("unknown")).toBe(1_500);
   });
 });
 

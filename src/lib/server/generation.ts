@@ -5,6 +5,7 @@ import { ApiError } from "./http";
 import type { ownedReview } from "./reviews";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requestValidatedGenerationWithMetrics } from "@/lib/generation-validation";
+import { outputTokenLimit } from "@/lib/generation-limits";
 import { recordGenerationMetric } from "./generation-metrics";
 
 const PROMPT_VERSION = "counterpart-2026-09-19-v2";
@@ -152,7 +153,7 @@ export async function generate<T>(
   try {
     const client = new GoogleGenAI({
       apiKey,
-      httpOptions: { timeout: 25_000, retryOptions: { attempts: 2 } },
+      httpOptions: { timeout: 25_000, retryOptions: { attempts: 1 } },
     });
     let generation: { value: T; retries: number };
     try {
@@ -169,7 +170,7 @@ export async function generate<T>(
               responseMimeType: "application/json",
               responseJsonSchema: schema,
               temperature: 0,
-              maxOutputTokens: 12000,
+              maxOutputTokens: outputTokenLimit(operation),
               abortSignal: AbortSignal.timeout(55_000),
             },
           });
