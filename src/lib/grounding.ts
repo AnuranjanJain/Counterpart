@@ -6,7 +6,17 @@ import {
   type DocumentVersion,
 } from "./domain";
 
-const normalize = (value: string) => value.replace(/\s+/g, " ").trim();
+function normalize(value: string) {
+  return value
+    .normalize("NFKC")
+    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+    .replace(/[\u2010-\u2015]/g, "-")
+    .replace(/\u00A0/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLocaleLowerCase("en-US");
+}
 
 export function validateCitations(
   citations: Citation[],

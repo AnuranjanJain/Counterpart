@@ -7,12 +7,18 @@ export async function requestValidatedGenerationWithMetrics<T>(
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     const text = await request(attempt);
     try {
-      return { value: validate(JSON.parse(text)), retries: attempt };
+      return { value: validate(parseModelJson(text)), retries: attempt };
     } catch (error) {
       validationError = error;
     }
   }
   throw validationError;
+}
+
+function parseModelJson(text: string) {
+  const trimmed = text.trim();
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return JSON.parse(fenced ? fenced[1] : trimmed);
 }
 
 export async function requestValidatedGeneration<T>(
