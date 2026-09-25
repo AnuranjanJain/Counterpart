@@ -315,12 +315,15 @@ describe("generated response validation", () => {
     expect(request).toHaveBeenCalledTimes(2);
   });
 
-  it("does not retry a provider failure", async () => {
-    const request = vi.fn().mockRejectedValue(new Error("provider unavailable"));
+  it("retries one provider failure", async () => {
+    const request = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("provider unavailable"))
+      .mockResolvedValueOnce('{"ok":true}');
     await expect(
       requestValidatedGeneration(request, (input) => input),
-    ).rejects.toThrow("provider unavailable");
-    expect(request).toHaveBeenCalledOnce();
+    ).resolves.toEqual({ ok: true });
+    expect(request).toHaveBeenCalledTimes(2);
   });
 });
 

@@ -5,8 +5,8 @@ export async function requestValidatedGenerationWithMetrics<T>(
 ): Promise<{ value: T; retries: number }> {
   let validationError: unknown;
   for (let attempt = 0; attempt <= retries; attempt += 1) {
-    const text = await request(attempt);
     try {
+      const text = await request(attempt);
       return { value: validate(parseModelJson(text)), retries: attempt };
     } catch (error) {
       validationError = error;
